@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dictee audio beluisteren</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; max-width: 760px; margin: 3rem auto; padding: 0 1rem; color: #173c43; background: #f7f4ec; }
+      h1 { line-height: 1.2; }
+      ol { list-style: none; padding: 0; display: grid; gap: .75rem; }
+      li { display: flex; align-items: center; gap: 1rem; background: #fffdf7; border: 1px solid #d9d9cc; border-radius: 12px; padding: .75rem 1rem; }
+      li span { flex: 1; font-weight: 600; }
+      audio { width: min(100%, 320px); }
+      @media (max-width: 560px) { li { display: block; } audio { display: block; margin-top: .5rem; } }
+    </style>
+    <script type="module">
+      import { words } from "./src/words.js";
+      document.querySelector("#count").textContent = words.length;
+      const list = document.querySelector("#words");
+      for (const word of words) {
+        const item = document.createElement("li");
+        const label = document.createElement("span");
+        const audio = document.createElement("audio");
+        label.textContent = word.text;
+        audio.controls = true;
+        audio.preload = "none";
+        audio.src = `./audio/${encodeURIComponent(word.id)}.mp3`;
+        item.append(label, audio);
+        list.append(item);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Dictee audio beluisteren</h1>
+    <p>Alle <span id="count">27</span> opnames met Gemini 3.1 Flash TTS Preview, stem Kore.</p>
+    <ol id="words"></ol>
+  </body>
+</html>

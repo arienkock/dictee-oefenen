@@ -1,47 +1,109 @@
-"""Generate publishable Dutch audio using the CC BY 4.0 Piper MLS voice.
+"""Generate Dutch dictation MP3s with Gemini TTS through OpenRouter.
 
-Install piper-tts and ffmpeg, then download nl_NL-mls-medium with
-`python -m piper.download_voices --data-dir /tmp/dictee-voice nl_NL-mls-medium`.
-Run `python scripts/generate-audio.py /tmp/dictee-voice/nl_NL-mls-medium.onnx`.
+Set OPENROUTER_API_KEY in the environment, then run `npm run audio`.
 """
 
 import json
+import os
 import subprocess
-import sys
 import tempfile
-import wave
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
-from piper import PiperVoice
-from piper.config import SynthesisConfig
-
 ROOT = Path(__file__).resolve().parents[1]
-MODEL = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("/tmp/dictee-voice/nl_NL-mls-medium.onnx")
-WORDS = json.loads(
-    subprocess.check_output(
-        ["node", "--input-type=module", "-e", "import {words} from './src/words.js'; console.log(JSON.stringify(words))"],
-        cwd=ROOT,
-        text=True,
+OUTPUT = ROOT / "audio"
+MODEL = "google/gemini-3.1-flash-tts-preview"
+VOICE = "Kore"
+STYLE_TAG = "[slowly, clearly articulated, with warm and gentle natural Dutch intonation]"
+
+
+def generate_mp3(key, word):
+    payload = {
+        "model": MODEL,
+        "input": f"{STYLE_TAG} {word['text']}",
+        "voice": VOICE,
+        "response_format": "pcm",
+    }
+    request = urllib.request.Request(
+        "https://openrouter.ai/api/v1/audio/speech",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "X-Title": "Dictee oefenen audio",
+        },
+        method="POST",
     )
-)
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(request, timeout=120) as response:
+                content_type = response.headers.get("Content-Type", "")
+                data = response.read()
+            break
+        except urllib.error.HTTPError as error:
+            if error.code in (429, 500, 502, 503, 504) and attempt < 3:
+                time.sleep(2 ** attempt)
+                continue
+            detail = error.read(1000).decode("utf-8", errors="replace")
+            raise SystemExit(f"{word['id']}: OpenRouter returned HTTP {error.code}: {detail}") from None
 
-voice = PiperVoice.load(MODEL)
-config = SynthesisConfig(speaker_id=6, length_scale=1.15)
-output = ROOT / "audio"
-output.mkdir(exist_ok=True)
+    if not content_type.startswith("audio/") or len(data) < 1000:
+        raise SystemExit(f"{word['id']}: unexpected response ({content_type}, {len(data)} bytes)")
+    # Gemini 3.1 returns headerless 24 kHz, 16-bit mono PCM.
+    return subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-f", "s16le", "-ar", "24000", "-ac", "1", "-i", "pipe:0", "-codec:a", "libmp3lame", "-qscale:a", "2", "-f", "mp3", "pipe:1"],
+        input=data,
+        capture_output=True,
+        check=True,
+    ).stdout
 
-with tempfile.TemporaryDirectory(prefix="dictee-audio-") as scratch:
-    scratch = Path(scratch)
-    for word in WORDS:
-        wav = scratch / f"{word['id']}.wav"
-        mp3 = scratch / f"{word['id']}.mp3"
-        with wave.open(str(wav), "wb") as target:
-            voice.synthesize_wav(word["text"], target, syn_config=config)
-        subprocess.run(
-            ["ffmpeg", "-loglevel", "error", "-y", "-i", str(wav), "-codec:a", "libmp3lame", "-qscale:a", "5", str(mp3)],
-            check=True,
+
+def validate_mp3(path):
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    duration = float(probe.stdout.strip())
+    if not (0.5 < duration < 20) or path.stat().st_size <= 1000:
+        raise SystemExit(f"Invalid audio: {path.name} ({duration:.2f}s)")
+    return duration
+
+
+def main():
+    key = os.environ.get("OPENROUTER_API_KEY")
+    if not key:
+        raise SystemExit("OPENROUTER_API_KEY is required")
+
+    words = json.loads(
+        subprocess.check_output(
+            ["node", "--input-type=module", "-e", "import {words} from './src/words.js'; console.log(JSON.stringify(words))"],
+            cwd=ROOT,
+            text=True,
         )
-    for word in WORDS:
-        (scratch / f"{word['id']}.mp3").replace(output / f"{word['id']}.mp3")
+    )
+    if len({word["id"] for word in words}) != len(words):
+        raise SystemExit("Duplicate word IDs")
 
-print(f"Generated {len(WORDS)} Dutch MP3 files with Piper in {output}")
+    with tempfile.TemporaryDirectory(prefix="dictee-gemini-") as temporary:
+        staged = Path(temporary)
+        for index, word in enumerate(words, start=1):
+            target = staged / f"{word['id']}.mp3"
+            target.write_bytes(generate_mp3(key, word))
+            duration = validate_mp3(target)
+            print(f"{index}/{len(words)} {word['id']}: {duration:.2f}s", flush=True)
+
+        for word in words:
+            (staged / f"{word['id']}.mp3").replace(OUTPUT / f"{word['id']}.mp3")
+
+    (OUTPUT / "generation.json").write_text(
+        json.dumps({"model": MODEL, "voice": VOICE, "style_tag": STYLE_TAG, "words": {word["id"]: word["text"] for word in words}}, ensure_ascii=False, indent=2) + "\n"
+    )
+    print(f"Updated {len(words)} MP3 files in {OUTPUT}")
+
+
+if __name__ == "__main__":
+    main()

@@ -10,7 +10,7 @@ Een statische Nederlandstalige webapp voor het oefenen van dicteewoorden. De eer
 npm run serve
 ```
 
-Open <http://localhost:4173>. Er is geen buildstap of account nodig. `npm test` controleert de oefenlogica.
+Open <http://localhost:4173>. Via <http://localhost:4173/audio-review.html> kun je alle opnames direct beluisteren. Er is geen buildstap of account nodig. `npm test` controleert de oefenlogica.
 
 ## Hoe het oefenen werkt
 
@@ -25,9 +25,9 @@ De combinatie van **ophalen uit het geheugen met directe correctie** en **gespre
 
 ## Woorden toevoegen
 
-Voeg een nieuwe lijst toe aan `src/words.js`. Geef elk woord een blijvend unieke `id`, de precies te dicteren `text`, en `difficulty` van 1 tot 5. Maak daarna audio met de [Piper-stem `nl_NL-mls-medium`](https://huggingface.co/rhasspy/piper-voices/blob/main/nl/nl_NL/mls/medium/MODEL_CARD): installeer `piper-tts` en `ffmpeg`, download het model met `python -m piper.download_voices --data-dir /tmp/dictee-voice nl_NL-mls-medium` en voer `python scripts/generate-audio.py /tmp/dictee-voice/nl_NL-mls-medium.onnx` uit. De MP3-bestanden in `audio/` horen bij de statische site. Als een bestand ontbreekt, probeert de app de Nederlandse stem van de browser.
+Voeg een nieuwe lijst toe aan `src/words.js`. Geef elk woord een blijvend unieke `id`, de precies te dicteren `text`, en `difficulty` van 1 tot 5. Installeer `ffmpeg` en `ffprobe`, zet `OPENROUTER_API_KEY` in je omgeving en voer `npm run audio` uit. Dit maakt alle MP3-bestanden in `audio/` opnieuw met [Gemini 3.1 Flash TTS Preview](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-tts-preview). De bestanden horen bij de statische site. Als een bestand ontbreekt, probeert de app de Nederlandse stem van de browser.
 
-De opnames zijn gemaakt met Piper en de Nederlandse MLS-spraakdataset ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); stem/model: `rhasspy/piper-voices`, `nl_NL-mls-medium`, spreker 7432. Deze bronvermelding hoort bij verspreiding van de opnames.
+De opnames zijn gemaakt met `google/gemini-3.1-flash-tts-preview` via OpenRouter, met stem `Kore`. De Engelse inline instructie voor de uitspraak staat in `scripts/generate-audio.py`; `audio/generation.json` legt de gebruikte instellingen en uitgesproken teksten vast.
 
 ## GitHub Pages
 
