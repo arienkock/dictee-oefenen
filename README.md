@@ -2,6 +2,8 @@
 
 Een statische Nederlandstalige webapp voor het oefenen van dicteewoorden. De eerste lijst is **BLOON Groep 6, blok 1** (27 woorden en zinnen uit de aangeleverde foto).
 
+**Live app:** <https://arienkock.github.io/dictee-oefenen/>
+
 ## Lokaal starten
 
 ```sh
@@ -29,4 +31,4 @@ De opnames zijn gemaakt met Piper en de Nederlandse MLS-spraakdataset ([CC BY 4.
 
 ## GitHub Pages
 
-Na het aanmaken van een GitHub-repository: voeg die als `origin` toe en push `main`. Kies in de repository bij **Settings → Pages → Build and deployment** de bron **GitHub Actions**. De workflow in `.github/workflows/pages.yml` publiceert daarna automatisch op elke push naar `main`. Alle paden zijn relatief, zodat de app ook onder een repository-pad werkt.
+De workflow in `.github/workflows/pages.yml` test en publiceert automatisch op elke push naar `main`. Voor een kopie van deze repository: kies bij **Settings → Pages → Build and deployment** de bron **GitHub Actions**. Alle paden zijn relatief, zodat de app ook onder een repository-pad werkt.
