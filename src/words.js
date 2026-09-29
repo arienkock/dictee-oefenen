@@ -32,6 +32,10 @@ export const batches = [
       { id: "lichaam", text: "lichaam", difficulty: 4 },
       { id: "kachel", text: "kachel", difficulty: 2 },
       { id: "omdraaien", text: "omdraaien", difficulty: 4 },
+      { id: "knoeien", text: "knoeien", difficulty: 4 },
+      { id: "mooie", text: "mooie", difficulty: 2 },
+      { id: "roeiboot", text: "de roeiboot", difficulty: 3 },
+      { id: "kraaiennest", text: "het kraaiennest", difficulty: 5 },
     ],
   },
 ];

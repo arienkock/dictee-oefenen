@@ -43,11 +43,22 @@ test("session finishes after ten first attempts and any scheduled retries", () =
 });
 
 test("every word has a unique ID and a bundled audio file", () => {
-  assert.equal(words.length, 27);
+  assert.equal(words.length, 31);
   assert.equal(new Set(words.map((word) => word.id)).size, words.length);
   for (const word of words) {
     const file = new URL(`../audio/${word.id}.mp3`, import.meta.url);
     assert.equal(existsSync(file), true, `${word.id} has no audio`);
     assert.ok(statSync(file).size > 1000, `${word.id} has empty audio`);
+  }
+});
+
+test("the additional words from the second photo are included verbatim", () => {
+  for (const [id, text] of [
+    ["knoeien", "knoeien"],
+    ["mooie", "mooie"],
+    ["roeiboot", "de roeiboot"],
+    ["kraaiennest", "het kraaiennest"],
+  ]) {
+    assert.equal(words.find((word) => word.id === id)?.text, text);
   }
 });

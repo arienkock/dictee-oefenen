@@ -1,8 +1,9 @@
 """Generate Dutch dictation MP3s with Gemini TTS through OpenRouter.
 
-Set OPENROUTER_API_KEY in the environment, then run `npm run audio`.
+Set OPENROUTER_API_KEY in the environment or .env.local, then run `npm run audio`.
 """
 
+import argparse
 import json
 import os
 import subprocess
@@ -74,9 +75,20 @@ def validate_mp3(path):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Generate Dutch dictation audio")
+    parser.add_argument("--ids", nargs="+", help="Generate only these word IDs")
+    args = parser.parse_args()
+
     key = os.environ.get("OPENROUTER_API_KEY")
     if not key:
-        raise SystemExit("OPENROUTER_API_KEY is required")
+        local_env = ROOT / ".env.local"
+        if local_env.exists():
+            for line in local_env.read_text().splitlines():
+                if line.startswith("OPENROUTER_API_KEY="):
+                    key = line.split("=", 1)[1].strip().strip('"\'')
+                    break
+    if not key:
+        raise SystemExit("OPENROUTER_API_KEY is required in the environment or .env.local")
 
     words = json.loads(
         subprocess.check_output(
@@ -87,22 +99,31 @@ def main():
     )
     if len({word["id"] for word in words}) != len(words):
         raise SystemExit("Duplicate word IDs")
+    if args.ids:
+        selected_ids = set(args.ids)
+        unknown = selected_ids - {word["id"] for word in words}
+        if unknown:
+            raise SystemExit(f"Unknown word IDs: {', '.join(sorted(unknown))}")
+        selected = [word for word in words if word["id"] in selected_ids]
+    else:
+        selected = words
 
     with tempfile.TemporaryDirectory(prefix="dictee-gemini-") as temporary:
         staged = Path(temporary)
-        for index, word in enumerate(words, start=1):
+        for index, word in enumerate(selected, start=1):
             target = staged / f"{word['id']}.mp3"
             target.write_bytes(generate_mp3(key, word))
             duration = validate_mp3(target)
-            print(f"{index}/{len(words)} {word['id']}: {duration:.2f}s", flush=True)
+            print(f"{index}/{len(selected)} {word['id']}: {duration:.2f}s", flush=True)
 
-        for word in words:
+        for word in selected:
             (staged / f"{word['id']}.mp3").replace(OUTPUT / f"{word['id']}.mp3")
 
+    manifest = {"model": MODEL, "voice": VOICE, "style_tag": STYLE_TAG, "words": {word["id"]: word["text"] for word in words}}
     (OUTPUT / "generation.json").write_text(
-        json.dumps({"model": MODEL, "voice": VOICE, "style_tag": STYLE_TAG, "words": {word["id"]: word["text"] for word in words}}, ensure_ascii=False, indent=2) + "\n"
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
     )
-    print(f"Updated {len(words)} MP3 files in {OUTPUT}")
+    print(f"Updated {len(selected)} MP3 files in {OUTPUT}")
 
 
 if __name__ == "__main__":

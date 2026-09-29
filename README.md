@@ -1,6 +1,6 @@
 # Dicteeclub
 
-Een statische Nederlandstalige webapp voor het oefenen van dicteewoorden. De eerste lijst is **BLOON Groep 6, blok 1** (27 woorden en zinnen uit de aangeleverde foto).
+Een statische Nederlandstalige webapp voor het oefenen van dicteewoorden. De eerste lijst is **BLOON Groep 6, blok 1** (31 woorden en zinnen uit de aangeleverde foto's).
 
 **Live app:** <https://arienkock.github.io/dictee-oefenen/>
 
@@ -25,7 +25,7 @@ De combinatie van **ophalen uit het geheugen met directe correctie** en **gespre
 
 ## Woorden toevoegen
 
-Voeg een nieuwe lijst toe aan `src/words.js`. Geef elk woord een blijvend unieke `id`, de precies te dicteren `text`, en `difficulty` van 1 tot 5. Installeer `ffmpeg` en `ffprobe`, zet `OPENROUTER_API_KEY` in je omgeving en voer `npm run audio` uit. Dit maakt alle MP3-bestanden in `audio/` opnieuw met [Gemini 3.1 Flash TTS Preview](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-tts-preview). De bestanden horen bij de statische site. Als een bestand ontbreekt, probeert de app de Nederlandse stem van de browser.
+Voeg een nieuwe lijst toe aan `src/words.js`. Geef elk woord een blijvend unieke `id`, de precies te dicteren `text`, en `difficulty` van 1 tot 5. Installeer `ffmpeg` en `ffprobe` en zet `OPENROUTER_API_KEY` in je omgeving of in een lokale `.env.local` (die door Git wordt genegeerd). Voer `npm run audio` uit voor alle woorden, of `npm run audio -- --ids woord1 woord2` voor alleen nieuwe woorden. Dit maakt MP3-bestanden in `audio/` met [Gemini 3.1 Flash TTS Preview](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-tts-preview). De bestanden horen bij de statische site. Als een bestand ontbreekt, probeert de app de Nederlandse stem van de browser.
 
 De opnames zijn gemaakt met `google/gemini-3.1-flash-tts-preview` via OpenRouter, met stem `Kore`. De Engelse inline instructie voor de uitspraak staat in `scripts/generate-audio.py`; `audio/generation.json` legt de gebruikte instellingen en uitgesproken teksten vast.
 
