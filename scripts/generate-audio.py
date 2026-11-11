@@ -20,10 +20,10 @@ VOICE = "Kore"
 STYLE_TAG = "[slowly, clearly articulated, with warm and gentle natural Dutch intonation]"
 
 
-def generate_mp3(key, word):
+def generate_mp3(key, word, style_tag=STYLE_TAG):
     payload = {
         "model": MODEL,
-        "input": f"{STYLE_TAG} {word['text']}",
+        "input": f"{style_tag} {word['text']}",
         "voice": VOICE,
         "response_format": "pcm",
     }
@@ -108,11 +108,20 @@ def main():
     else:
         selected = words
 
+    manifest_path = OUTPUT / "generation.json"
+    previous = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+    style_overrides = {
+        word["id"]: previous["style_overrides"][word["id"]]
+        for word in words
+        if word["id"] in previous.get("style_overrides", {})
+        and previous.get("words", {}).get(word["id"]) == word["text"]
+    }
+
     with tempfile.TemporaryDirectory(prefix="dictee-gemini-") as temporary:
         staged = Path(temporary)
         for index, word in enumerate(selected, start=1):
             target = staged / f"{word['id']}.mp3"
-            target.write_bytes(generate_mp3(key, word))
+            target.write_bytes(generate_mp3(key, word, style_overrides.get(word["id"], STYLE_TAG)))
             duration = validate_mp3(target)
             print(f"{index}/{len(selected)} {word['id']}: {duration:.2f}s", flush=True)
 
@@ -120,7 +129,9 @@ def main():
             (staged / f"{word['id']}.mp3").replace(OUTPUT / f"{word['id']}.mp3")
 
     manifest = {"model": MODEL, "voice": VOICE, "style_tag": STYLE_TAG, "words": {word["id"]: word["text"] for word in words}}
-    (OUTPUT / "generation.json").write_text(
+    if style_overrides:
+        manifest["style_overrides"] = style_overrides
+    manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
     )
     print(f"Updated {len(selected)} MP3 files in {OUTPUT}")

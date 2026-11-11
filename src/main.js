@@ -2,6 +2,8 @@ import { batches, words } from "./words.js";
 import { SESSION_SIZE, chooseWord, createSession, dueCount, isCorrect, readProgress, recordAnswer, saveProgress } from "./practice.js";
 
 const app = document.querySelector("#app");
+const listTitle = batches.map((batch) => batch.title).join(" + ");
+document.querySelector("#list-title").textContent = listTitle;
 const progress = readProgress(window.localStorage);
 let session = null;
 let audio = null;
@@ -71,7 +73,7 @@ function renderHome() {
     </section>
     <section class="list-panel">
       <div class="list-icon" aria-hidden="true">Aa</div>
-      <div><div class="section-kicker">DE EERSTE LIJST</div><h2>Groep 6 · Blok 1</h2><p>${words.length} woorden en zinnen uit de BLOON-lijst.</p></div>
+      <div><div class="section-kicker">DE HUIDIGE LIJST</div><h2>${escapeHtml(listTitle)}</h2><p>${words.length} woorden en zinnen uit de BLOON-lijst.</p></div>
       <details class="word-list"><summary>Bekijk de woorden <span aria-hidden="true">⌄</span></summary><div class="word-grid">${words.map((word) => `<span>${escapeHtml(word.text)}</span>`).join("")}</div></details>
     </section>
     <div class="method-note"><span aria-hidden="true">✳</span><p>Je begint bij woorden van gemiddelde moeilijkheid. Wat lastig is, oefen je later opnieuw — ook op een volgende dag.</p></div>
@@ -102,7 +104,7 @@ function renderQuestion() {
   const { word, retry } = session.current;
   app.innerHTML = `
     <section class="practice-screen">
-      <div class="practice-top"><button class="text-button" id="home-button">← Terug naar begin</button><span class="round-label">GROEP 6 · BLOK 1</span></div>
+      <div class="practice-top"><button class="text-button" id="home-button">← Terug naar begin</button><span class="round-label">${escapeHtml(listTitle.toLocaleUpperCase("nl-NL"))}</span></div>
       <div class="practice-layout">
         <aside class="progress-card"><div class="section-kicker">DEZE RONDE</div><strong>${Math.min(session.newCount + (retry ? 0 : 1), SESSION_SIZE)} <span>/ ${SESSION_SIZE}</span></strong><div class="progress-dots" aria-hidden="true">${progressDots()}</div><p>${retry ? "Een lastig woord komt terug. Je kunt het!" : "Neem rustig de tijd. Je kunt zo vaak luisteren als je wilt."}</p><div class="progress-decoration" aria-hidden="true">✳</div></aside>
         <div class="question-card"><div class="question-step">${retry ? "NOG EEN KEER" : `WOORD ${Math.min(session.newCount + 1, SESSION_SIZE)} VAN ${SESSION_SIZE}`}</div><h1>Wat hoor je?</h1><p>Luister goed en typ de hele zin of het hele woord.</p>

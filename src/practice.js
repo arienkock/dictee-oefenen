@@ -2,7 +2,7 @@ export const SESSION_SIZE = 10;
 export const STORAGE_KEY = "dicteeclub-progress-v1";
 
 export function normalize(text) {
-  return text.trim().toLocaleLowerCase("nl-NL").replace(/\s+/g, " ").normalize("NFC");
+  return text.trim().toLocaleLowerCase("nl-NL").replace(/[‘’]/g, "'").replace(/\s+/g, " ").normalize("NFC");
 }
 
 export function isCorrect(input, answer) {
