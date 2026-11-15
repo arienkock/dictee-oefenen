@@ -16,6 +16,7 @@ Open <http://localhost:4173>. Via <http://localhost:4173/audio-review.html> kun 
 
 - Een ronde bevat 10 eerste pogingen. De eerste ronde begint bij moeilijkheid 3 van 5.
 - De app dicteert de hele tekst, inclusief lidwoord of onderwerp. Het antwoord verschijnt pas na controle.
+- De antwoord- en correctievelden schakelen automatisch aanvullen, autocorrectie, spellingscontrole en schrijfsuggesties uit voor zover de browser dit ondersteunt. Toont het toetsenbord toch woordvoorspellingen, schakel die dan uit in de toetsenbordinstellingen van het apparaat.
 - Rechte en gekrulde apostrofs worden gelijk gerekend, bijvoorbeeld bij `’s zondags` en `de paraplu’s`. De apostrof zelf blijft verplicht.
 - Een fout antwoord krijgt direct de juiste spelling. De leerling schrijft die over en hoort het woord na twee andere vragen opnieuw. Er zijn maximaal twee extra pogingen per woord in een ronde.
 - Goede antwoorden krijgen een volgende oefendatum na 1, 3, 7, 14 of 30 dagen, afhankelijk van de reeks goede antwoorden. Na een fout is het woord weer direct aan de beurt in een volgende ronde.
